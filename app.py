@@ -17,20 +17,17 @@ from core import chrome, settings  # noqa: E402
 from core.aula import BACKUP_DIR, Hub  # noqa: E402
 from core.music import MusicEngine  # noqa: E402
 from core.knob_router import KnobRouter
-from core.knob_mode import KnobModeWatcher  # noqa: E402
-from core.mode_guard import ModeGuard  # noqa: E402
+from core.page_watch import PageWatch  # noqa: E402
 from core.tray import Tray  # noqa: E402
 
 ICON = os.path.join(BASE, "assets", "icon.ico")
 hub = Hub()
 music = MusicEngine(hub)
 router = KnobRouter(hub)
-# 键盘固件有自己的模式（配置页 0x1A=1）：进去之后旋钮由固件直接调背光，
-# 一个按键都不发给电脑，软件接管彻底失效。这个守护线程盯着那个字节。
-mode_guard = ModeGuard(hub)
-# 长按旋钮 = 切到下一个槽。判据是配置页 0x1A（固件专属模式标记），
-# 详见 core/knob_mode.py 的头注释。
-slot_watch = KnobModeWatcher(hub, on_toggle=router.cycle_mode)
+# 一个线程干两件事：检测长按（配置页 0x1A 被固件改动）+ 把键盘拉出固件模式。
+# 原来这是两个线程各自轮询同一张配置页：重复耗电，还会抢同一个 0x1A。
+# 详见 core/page_watch.py 的头注释。
+page_watch = PageWatch(hub, on_flip=router.cycle_mode)
 
 
 def _toggle_music():
@@ -162,11 +159,12 @@ class Api:
         """
         st = router.status()
         try:
-            st["modeGuard"] = mode_guard.status()
-        except Exception:
-            pass
-        try:
-            st["slotWatch"] = slot_watch.status()
+            watch = page_watch.status()
+            st["slotWatch"] = watch
+            # 兼容旧字段：前端还有地方读 modeGuard.rescued
+            st["modeGuard"] = {"rescued": watch["rescued"],
+                               "enabled": watch["enabled"],
+                               "error": watch["error"]}
         except Exception:
             pass
         return st
@@ -197,6 +195,11 @@ class Api:
                 hub.snap.last_ok = 0.0
                 hub.last_full = 0.0
                 ok = back[0x1A] == 0
+                try:
+                    page_watch._last_rescue = time.time()
+                    page_watch.last_fp = page_watch._fingerprint(back)
+                except Exception:
+                    pass
                 return {"ok": ok, "was": was, "now": back[0x1A],
                         "msg": "已切回软件模式" if ok else "写入没被接受"}
         except Exception as exc:
@@ -499,15 +502,10 @@ def _after_start():
     # 那时旋钮由固件直接调背光、一个按键都不发给电脑，接管彻底失效。
     # 这个线程每 2 秒看一眼，发现是 1 就写回 0。
     try:
-        mode_guard.enabled = True
-        mode_guard.start()
-        try:
-            slot_watch.enabled = True
-            slot_watch.start()
-        except Exception as exc:                     # noqa: BLE001
-            _dbg(f"长按切槽监听没起来：{type(exc).__name__}: {exc}")
-    except Exception:
-        pass
+        page_watch.enabled = True
+        page_watch.start()
+    except Exception as exc:                     # noqa: BLE001
+        _dbg(f"配置页守护没起来：{type(exc).__name__}: {exc}")
     tab = os.environ.get("AULA_TAB")          # 调试用：启动后直接切到某一页
     js = os.environ.get("AULA_JS")            # 调试用：启动后执行一段前端 JS
     probe = os.environ.get("AULA_PROBE")      # 调试用：执行 JS 并把结果写进文件
@@ -574,11 +572,7 @@ def _quit():
     global _really_quit
     _really_quit = True
     try:
-        slot_watch.stop()
-    except Exception:
-        pass
-    try:
-        mode_guard.stop()
+        page_watch.stop()
     except Exception:
         pass
     try:

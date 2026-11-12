@@ -751,13 +751,14 @@ class Hub:
         self.link = None
         self.snap = Snapshot()
         self.page: bytes | None = None
+        self._page_fresh_at = 0.0        # page 是什么时候从设备读回来的
         self.fails = 0
         self.last_full = 0.0
         # 轻量轮询：电量每 10s 一次，完整配置每 60s 重读，连续 3 次失败才判定断开
         self.poll_interval = 10.0
         self.full_interval = 60.0
         # 最近一次真正把配置页写进设备的时刻（time.time()）。长按旋钮的检测器
-        # 靠它排除「自己刚写完」造成的假长按，见 core/knob_mode.py。
+        # 靠它排除「自己刚写完」造成的假长按，见 core/page_watch.py。
         self._last_write_at = 0.0
 
     # ---------- 连接 ----------
@@ -791,8 +792,15 @@ class Hub:
                 need_full = force or not s.connected or (now - self.last_full) > self.full_interval
                 if need_full:
                     info = self.link.password()
-                    page = self.link.read_page()
-                    self.page = page
+                    # 2.4G 读一次配置页 = 10 个射频包（128B / 每包 14B），比有线贵得多。
+                    # 而 page_watch 已经在按 2.5s 的节奏读页、并把结果放进 hub.page，
+                    # 所以这里不再重复读 —— 直接复用那份缓存。
+                    # 若 page_watch 没在跑（被关掉），才自己读一次。
+                    page = self.page
+                    if page is None or (now - self._page_fresh_at) > 10.0:
+                        page = self.link.read_page()
+                        self.page = page
+                        self._page_fresh_at = now
                     self.last_full = now
                     s.model = "AULA F99 Pro" if info[5] == 0x58 else "AULA F99 系列"
                     # 0 是「关闭」，不是无效值 —— 之前写 `or 1` 把关闭吃掉了

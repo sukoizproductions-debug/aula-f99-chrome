@@ -634,23 +634,30 @@ class KnobRouter:
         self.installed = True
         self.last_error = ""
 
-        # 低级钩子要求所在线程有消息循环
+        # 低级钩子要求所在线程有消息循环。
+        #
+        # 这里必须用**阻塞式** GetMessageW，不能用 PeekMessageW + sleep 忙轮询：
+        # 旧写法每 4ms 空转一次 = 每秒 250 次唤醒，白白占 CPU 和调度。
+        # 钩子回调本身就由系统在这个线程上派发，不依赖我们自己轮询。
+        # stop() 用 PostThreadMessageW(WM_QUIT) 叫醒，GetMessageW 会返回 0 退出。
+        user32.GetMessageW.argtypes = [ctypes.POINTER(wt.MSG), wt.HWND, wt.UINT, wt.UINT]
+        user32.GetMessageW.restype = ctypes.c_int          # 可以是 -1（出错），不能用 BOOL
         msg = wt.MSG()
         while not self._stop.is_set():
-            got = user32.PeekMessageW(ctypes.byref(msg), None, 0, 0, 1)
-            if got:
-                if msg.message == 0x0012:      # WM_QUIT
-                    break
-                if msg.message == WM_HOTKEY and msg.wParam == HOTKEY_ID:
-                    try:
-                        self.cycle_mode()
-                    except Exception as exc:               # noqa: BLE001
-                        self.last_error = f"切模式失败: {type(exc).__name__}: {exc}"
-                    continue
-                user32.TranslateMessage(ctypes.byref(msg))
-                user32.DispatchMessageW(ctypes.byref(msg))
-            else:
-                time.sleep(0.004)
+            got = user32.GetMessageW(ctypes.byref(msg), None, 0, 0)
+            if got == 0:                       # WM_QUIT
+                break
+            if got < 0:                        # 消息循环出错，别死转
+                self.last_error = f"消息循环出错 (err={ctypes.get_last_error()})"
+                break
+            if msg.message == WM_HOTKEY and msg.wParam == HOTKEY_ID:
+                try:
+                    self.cycle_mode()
+                except Exception as exc:               # noqa: BLE001
+                    self.last_error = f"切模式失败: {type(exc).__name__}: {exc}"
+                continue
+            user32.TranslateMessage(ctypes.byref(msg))
+            user32.DispatchMessageW(ctypes.byref(msg))
 
         try:
             user32.UnregisterHotKey(None, HOTKEY_ID)
