@@ -1,366 +1,114 @@
-# AULA Hub
+# AULA Hub (web)
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-7c4dff.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%2F%2011%20x64-0ea5e9.svg)](#安装)
-[![Python](https://img.shields.io/badge/python-3.10%2B-3776ab.svg)](requirements.txt)
-[![Self-check](https://img.shields.io/badge/self--check-25%2F25%20PASS-22c55e.svg)](docs/SELF-CHECK.md)
+Control an **AULA F99 Pro** keyboard from the browser. Lighting, per-key colours, key remapping, macros and battery level, with no driver or app to install. The page talks to the keyboard directly over [WebHID](https://developer.mozilla.org/docs/Web/API/WebHID_API); nothing is sent to a server.
 
-<!--
-一句话摘要（给搜索引擎和人看的，不必逐字读）：
-狼蛛 AULA F99 Pro 键盘驱动替代品。官方驱动看不到电量？这个能看。
-开源、免安装、不需要 Python，Windows 10/11 双击即用。
-功能覆盖：键盘灯效（20 种）、逐键 RGB（126 灯位单独调色）、音乐律动（10 种风格）、
-改键（4 层：默认 / FN1 / FN2 / Tap）、宏录制（写进键盘本体 10 KB 宏库）、
-旋钮（15 种可绑定动作、长按切自定义槽位）、电量显示、2.4G 无线读取。
-完全离线、不装内核驱动、不碰固件。
-同款型号：F99 Pro / F99Pro / F99-PRO / AULA F99 / 狼蛛F99 / 狼蛛 F99 Pro / AULA-F99Pro。
-硬件 ID：258A:010C（有线）、3554:FA09（2.4G 接收器）。
--->
+This is a web port of [xx12ek/aula-f99-pro-hub](https://github.com/xx12ek/aula-f99-pro-hub), a Windows desktop app. The reverse-engineered protocol is theirs; this project rewrites the device layer in JavaScript and replaces the interface.
 
-> 🌐 [English](README.en.md) · 中文
-
-**一个现代化、开源的狼蛛 AULA F99 Pro 键盘控制中心 —— 替代那个 2019 年风格、还不显示电量的官方驱动。**
-
-> **直接下载**：[AULA-Hub-portable.zip](https://github.com/xx12ek/aula-f99-pro-hub/releases/latest) · 免安装、不需要 Python、不需要管理员权限
-
-原厂驱动的问题：界面停留在 Windows 7 年代、三个型号配置里 `ShowPower=0` 导致**永远看不到电量**、改键要做一堆反人类的点击、没有命令行、没有 Linux 支持。
-
-这个项目用**纯用户态 HID**（不装驱动、不改系统、不碰固件）重写了一遍，把原厂藏起来的能力全部挖出来并补齐。
-
----
-
-## 界面
-
-<table>
-<tr>
-<td width="50%"><img src="docs/screenshots/lighting.png" alt="灯光页"><br><b>灯光</b> — 20 种灯效、亮度/速度无极拖动、逐键调色、10 种音乐律动</td>
-<td width="50%"><img src="docs/screenshots/remap.png" alt="改键页"><br><b>改键 / 宏</b> — 4 层、8 类功能、每颗键显示真实中文功能名</td>
-</tr>
-<tr>
-<td><img src="docs/screenshots/settings.png" alt="设置页"><br><b>设置</b> — 设备信息、托盘行为、开机自启、备份还原</td>
-<td><img src="docs/screenshots/misc.png" alt="杂项页"><br><b>杂项</b> — 配置导入导出、去抖诊断、原始配置页、恢复出厂</td>
-</tr>
-</table>
-
-> 截图是 `?demo=1` 的离线演示模式（不需要接键盘也能看界面）。
-
-## 它现在能做什么
-
-### 灯光
-- **20 种灯效**（含「关闭」），与键盘固件一一对应
-- 亮度（0–9 档）、速度（0–4 档）**无极拖动 + 松手缓动吸附**，改完立即生效
-- **逐键颜色**：126 个灯位单独调色，内置色盘（HSV 圆环 + 明度条）
-- **10 种音乐律动**：走 WASAPI 环回采集系统正在播放的声音，FFT 后按节奏刷灯
-- 颜色组与灯效槽位按原厂 `LedOptN` 表精确映射（不是猜的）
-
-### 改键 / 宏
-- **4 层**：默认按键层 / FN1 / FN2 / Tap
-- **8 个功能分类**：键盘、鼠标、多媒体、常用命令、组合键、修饰键、键盘内建、软件功能
-- 每颗键直接显示**真实中文功能名**（不再是一排「特殊」）
-- 宏录制：按键序列 + 延时，存进键盘本体的 10 KB 宏库
-- 每一个写操作都**读回校验**，写不进去会明确报错而不是假装成功
-
-### 旋钮
-- **15 种可绑定动作**（系统音量 / 屏幕亮度 / 键盘背光 / 灯效切换 / 音乐律动…）
-- **可增删改的槽位**：长按旋钮在自定义槽位之间轮回切换，槽位内容和数量都由你定
-- 音量走**系统原生**通道（放行真键 → Windows 自己画那条胶囊提示条）
-- 其余动作走**自绘 OSD**，尺寸/圆角/图标/强调色逐像素对齐 Windows 11 实测值
-
-### 其它
-- **电量**：数字 + 环形进度 + 充电状态（原厂藏了这个功能）
-- **2.4G 无线支持**：读取全部状态、改灯效/亮度/速度/休眠；写改键与逐键颜色需要插线（协议层限制，不是偷懒）
-- **固件模式守护**：长按旋钮会让键盘进入固件自己的模式（旋钮只调背光、不再发任何按键），后台自动把它拉回来
-- 托盘常驻、关窗不退出、开机自启（可选）、电量图标
-- 备份 / 还原：每次写设备前自动存一份快照，一键回到上一版
-
----
-
-## 安装
-
-### 方式一：直接下载（推荐，普通用户）
-
-到 [Releases](https://github.com/xx12ek/aula-f99-pro-hub/releases) 下载 `AULA-Hub-portable.zip`，解压到任意目录，双击 `AULA-Hub.exe`。
-
-- 免安装、不需要管理员权限、不需要装 Python
-- 只支持 **Windows 10 / 11 x64**
-
-### 方式二：从源码跑（开发者）
-
-```bash
-git clone https://github.com/xx12ek/aula-f99-pro-hub.git
-cd aula-hub
-pip install -r requirements.txt
-python app.py
-```
-
-需要 Python 3.10+ 和 Edge WebView2（Win11 自带，Win10 可能要装一次）。
-
----
-
-## 支持哪些键盘
-
-目前**只针对 AULA F99 Pro** 验证过。判断你的键盘能不能用：
-
-| VID | PID | 型号 |
+| Lighting | Per-key colours | Keys |
 |---|---|---|
-| `0x258A` | `0x010C` | 有线 |
-| `0x3554` | `0xFA09` | 2.4G 接收器 |
+| ![Lighting page](docs/screenshots/lighting.jpg) | ![Colours page](docs/screenshots/colours.jpg) | ![Keys page](docs/screenshots/keys.jpg) |
 
-在 PowerShell 里跑这句能看到你的设备：
+## What it does
 
-```powershell
-Get-PnpDevice -Class HIDClass | Where-Object { $_.InstanceId -match "258A|3554" } | Select-Object FriendlyName, InstanceId
-```
+- **Lighting**: 20 effects, brightness, speed and colour, plus your own one-click presets.
+- **Per-key colours**: paint the keys, keep a palette, save whole layouts as profiles.
+- **Keys**: remap any key on four layers (Base, Fn 1, Fn 2, Tap) to a key, shortcut, media key, mouse button, built-in keyboard function or macro. Press-to-assign is supported.
+- **Macros**: record or edit key sequences stored in the keyboard's own 10 KB macro memory.
+- **Knob**: change what the knob does, and recover from the keyboard's own "knob mode".
+- **Audio reactive**: lights follow tab, system or microphone audio while the page is open.
+- **Device**: battery level, sleep timer, backup to a file, restore points, factory reset.
+- **Preferences**: theme, accent colour, density, sidebar style, keyboard size, start page and behaviour toggles.
 
-AULA 的其他型号（F75 / F87 / F99 非 Pro）大概率共用同一套协议，但**没有实测数据**，能用或不能用都欢迎开 issue 告诉我。
+Remaps, macros and lighting are stored on the keyboard, so they keep working after the page is closed.
 
----
+## Requirements
 
-## 已知做不到的事
+- A Chromium browser on a computer: Chrome, Edge or Opera. Firefox and Safari do not have WebHID.
+- The page must be served over `https://` (or `http://localhost`).
+- AULA F99 Pro: wired `258A:010C`, or its 2.4G receiver `3554:FA09`.
 
-我宁愿写清楚，也不想让你点半天才发现：
-
-| 做不到 | 原因 |
+| Connection | What works |
 |---|---|
-| 2.4G 下写改键 / 写逐键颜色 / 写宏 | 固件的无线通道只开放了读命令。实测 24 + 18 组命令组合全部无效 |
-| 2.4G 下改旋钮槽位 | 同上，读不到配置页 |
-| 让软件唤出 Windows 原生的亮度条 | 试过 WASAPI / SendInput / keybd_event / 扫描码 / WM_APPCOMMAND / WMI / Dxva2，**全部不弹**。只有真实硬件按键才会触发 |
-| 从软件升级固件 | 原厂 V3 工具是烧录器，本体不含 `.hex`。刷坏就变砖 |
-| 关掉「长按旋钮切固件模式」 | 那是固件行为，用户态关不掉。只能让它切、然后立刻接管回来 |
+| USB cable | Everything |
+| 2.4G receiver | Battery, lighting, sleep timer; viewing colours and the base key layer |
+| Bluetooth | Not supported |
 
----
+The wireless limit is in the keyboard's firmware: over 2.4G it does not accept key, colour or macro writes. While the cable is plugged in, the keyboard ignores the receiver.
 
-## 这是怎么逆向出来的
-
-整个项目建立在**对原厂驱动 `OemDrv.exe` 与键盘固件协议的逆向**之上。核心发现（完整记录见 [`docs/PROTOCOL.md`](docs/PROTOCOL.md)）：
-
-- **有线通道**：HID feature report，report id `6`，520 字节（8 字节头 + 512 数据）
-- **2.4G 通道**：20 字节中断包，report id `0x13`，末字节是 `sum(all)&0xFF` 校验
-- **配置页**：128 字节，尾标记 `5A A5`，灯效表从 `0x3A` 起每槽 2 字节
-- **矩阵记录**：每键 4 字节，`b0` 是功能类别（普通键/命令/Consumer/宏/鼠标/固件内建…）
-- **逐键颜色**：不是 RGBRGB 交错，而是 **R×126 + G×126 + B×126 三个平面**传输 —— 搞错会让整块颜色乱套
-
-**没有任何固件被修改。** 所有操作都是驱动本来就支持、只是没在界面上给你的命令。
-
----
-
-## 项目结构
+On Linux, Chrome needs permission to open the device. Add a udev rule and re-plug the keyboard:
 
 ```
-aula-f99-pro-hub/
-├── app.py              主程序 + pywebview 窗口 + JS↔Python 桥
-├── core/
-│   ├── aula.py         HID 协议层（有线 / 2.4G / 配置页 / 矩阵 / RGB / 宏）
-│   ├── knob_router.py  旋钮接管（低级键盘钩子 + 槽位 + OSD）
-│   ├── knob_mode.py    长按旋钮识别（配置页指纹）
-│   ├── mode_guard.py   固件模式自动拉回
-│   ├── osd.py          自绘 OSD（纯 Win32 layered window）
-│   ├── sysvol.py       WASAPI 音量 + WMI 屏幕亮度
-│   ├── music.py        音乐律动引擎（WASAPI loopback + FFT）
-│   ├── macro.py        宏编码/解码
-│   ├── misc.py         导入导出 / 恢复出厂 / 原始配置页
-│   ├── settings.py     应用设置
-│   ├── tray.py         系统托盘
-│   └── chrome.py       Windows 深色标题栏
-├── ui/                 前端（原生 HTML/CSS/JS，无框架无构建）
-├── tools/selfcheck.py  25 项功能自检脚本
-└── docs/               协议文档、自检报告
+# /etc/udev/rules.d/50-aula-f99.rules
+KERNEL=="hidraw*", ATTRS{idVendor}=="258a", ATTRS{idProduct}=="010c", MODE="0660", TAG+="uaccess"
+KERNEL=="hidraw*", ATTRS{idVendor}=="3554", ATTRS{idProduct}=="fa09", MODE="0660", TAG+="uaccess"
 ```
 
----
+## Run it locally
 
-## 自检
-
-想确认在你机器上一切正常，跑：
+No build step and no dependencies. Any static file server works; one is included:
 
 ```bash
-python tools/selfcheck.py
+node tools/serve.mjs
 ```
 
-会逐项验证 25 个能力并打印 PASS/FAIL，所有写操作写完都会还原。最后一次结果见 [`docs/SELF-CHECK.md`](docs/SELF-CHECK.md)。
+Then open <http://localhost:5173>. Add `?demo` to the address (or press **Try the demo**) to use a simulated keyboard.
 
----
-
-## 安全性
-
-- **不装内核驱动**、不需要管理员权限、不写系统目录
-- **不改固件**，所有命令都在原厂驱动已有的能力范围内
-- 唯一的全局钩子是 `WH_KEYBOARD_LL`，**只截三个旋钮键**（音量+/-/静音）和 `F13`–`F20`，其它按键一律原样放行
-- 网络：**完全离线**，不联网、不上传、不检查更新
-
-源码全部公开，欢迎审计。
-
----
-
-## 贡献
-
-如果你有 AULA 的其他型号并且愿意帮忙测试，非常欢迎：
-
-1. 用 `tools/selfcheck.py` 跑一遍，把输出贴到 issue
-2. 或者直接开 issue 告诉我型号 + VID/PID + 哪些功能能用
-
-协议文档（`docs/PROTOCOL.md`）里标了哪些结论是**实测确认**、哪些是**推测未验证**，请以实测为准。
-
----
-
-### 驱动怎么安装？
-
-不用安装。下载 `AULA-Hub-portable.zip`，解压到任意文件夹（不要放在桌面以外的系统目录），
-双击 `AULA-Hub.exe`。第一次启动 Windows 可能弹一次「已保护你的电脑」，点"更多信息 → 仍要运行"。
-
-想让它开机自启：设置页 → 开机自动运行。想到右下角常驻：设置页 → 关闭时缩小到托盘。
-
-### 灯效怎么调？
-
-打开软件第一页「灯光」。左边 20 个灯效卡，点一下就生效（不用点保存）。
-下滑是亮度条和速度条，拖动即可，松手自动吸附到最近的档位。
-
-想把整块键盘改成一个颜色：选「自定义」灯效 → 点颜色圆片 → 用色盘挑色。
-
-### 单颗键怎么单独变色？
-
-第二页「调色」。左边是键盘俯视图，点任意一颗键，右边选颜色。
-126 个灯位都可以单独设。
-
-注意：必须先在灯光页切到「自定义」灯效，单键颜色才会显示（这是固件要求，不是软件限制）。
-
-### 怎么改键？怎么设置宏？
-
-第三页「改键」。
-
-- **改键**：点键盘图上任意一颗键 → 弹出功能面板 → 8 个分类随便选。选完立即写入键盘。
-- **宏**：面板里选「宏」→ 新建 → 录制你的按键序列 → 保存。宏存在键盘本体里（10 KB 空间），
-  不是存在电脑里，所以换电脑也能用。
-
-有 4 层可以分别设置：默认按键层 / FN1 层 / FN2 层 / Tap 层。左上角切换。
-
-### 旋钮怎么用？
-
-第四页「旋钮」。
-
-- 转动方向可以分别绑 15 种动作（音量、屏幕亮度、键盘背光、切灯效、开关音乐律动……）
-- **长按旋钮** 会在这几个槽位之间轮回切换 —— 槽位可以自己增删改名字和绑定
-- 按下旋钮也能单独绑
-
-如果你长按旋钮后键盘变得"不听话"（旋钮只调背光、电脑收不到按键），那是进了键盘固件自己的模式。
-本软件有守护，几秒内会自动拉回来。
-
-### 电量在哪看？
-
-左上角那个圆环就是。插着线显示"已接通电源"，无线时显示百分比和"电池供电"。
-
-右下角托盘图标也显示电量，鼠标悬停就能看到。
-
-### 怎么恢复出厂设置？
-
-「杂项」页最下面 → 恢复出厂。会清掉所有改键、宏、灯效设置。
-
-**建议先点上面的「立即备份」和「导出配置」**，出问题能一键还原。
-
-### 键盘多久休眠？能改吗？
-
-能。「杂项」页 → 自动休眠，9 档可选（1 分钟到 20 分钟）。
-
-休眠后随便按一个键就唤醒，软件几秒内会自动重连。
-
-### 为什么插着数据线，2.4G 接收器就没反应？
-
-键盘固件在同一时间只走一条通道。插线时优先有线，拔线后几秒自动切 2.4G。
-
-想切 2.4G：拔掉数据线即可。想切有线：插上数据线。
-
----
-
----
-
-## 搜索关键词 / Keywords
-
-<sub>这一节是给人搜的，不是给读的 —— 如果你是从搜索引擎或 GitHub 搜索进来的，命中的应该是下面某一行。</sub>
-
-**中文**：狼蛛 F99 Pro 驱动 · 狼蛛F99Pro驱动 · 狼蛛键盘驱动 · 狼蛛驱动下载 · AULA驱动 ·
-AULA F99 Pro 驱动 · 狼蛛 F99 Pro 软件 · 狼蛛键盘电量 · 键盘电量显示 · 狼蛛键盘灯光软件 ·
-狼蛛改键软件 · 狼蛛宏设置 · 狼蛛旋钮 · 狼蛛键盘说明书 · 狼蛛键盘固件 · F99 Pro 驱动替代 ·
-官方驱动太丑 · 官方驱动没有电量 · 国产键盘驱动 · 磁轴键盘驱动（本型号是机械轴，不支持） ·
-机械键盘改键工具 · 键盘逐键RGB · 键盘音乐律动 · 键盘灯效软件 · 免安装键盘驱动 ·
-开源键盘驱动 · 键盘驱动逆向
-
-**English**: AULA F99 Pro driver · AULA keyboard software · AULA driver download ·
-AULA F99 Pro software · AULA keyboard battery · AULA lighting software ·
-AULA remapping · AULA macro software · AULA knob · AULA firmware ·
-replace AULA driver · AULA driver alternative · Chinese keyboard driver ·
-HID keyboard tool · per-key RGB keyboard · keyboard music visualizer ·
-open source keyboard driver · keyboard driver reverse engineering ·
-258A:010C · 3554:FA09
-
-**型号写法**（同款键盘的各处叫法）：F99 Pro · F99Pro · F99-PRO · AULA F99 · 狼蛛F99 ·
-狼蛛 F99 Pro · 狼蛛F99Pro · 狼蛛 F99PRO · AULA-F99Pro
-
----
-
-## 同款键盘常见问题
-
-<sub>装不上、调不动、看不懂？先看这里。每一条都是实际被问过的。</sub>
-
-### 官方驱动看不到电量，是键盘不支持吗？
-
-不是。原厂 `KB.ini` 里三个型号配置都写着 `ShowPower=0`，等于**官方主动把这个功能关掉了**。
-键盘固件本身有电量命令（有线 `0x87`、2.4G `0x4A`），本软件直接读它，所以能显示。
-
-### 官方驱动太老了，还在用 Windows 7 的风格
-
-原厂最后一次更新是 2024 年，界面是 MFC 时代的产物。本软件用 WebView2 重写了界面，深色/浅色跟随系统。
-
-### 我这个是 F99 还是 F99 Pro？能用吗？
-
-设备管理器里看硬件 ID：
-- `USB\VID_258A&PID_010C` → F99 Pro 有线，**确定支持**
-- `USB\VID_3554&PID_FA09` → 2.4G 接收器，**确定支持**
-- 其他 VID/PID → 大概率不支持，但你可以跑 `tools/selfcheck.py` 看看，然后把结果贴到 issue
-
-一行命令自查：
-
-```powershell
-Get-PnpDevice -Class HIDClass | Where-Object { $_.InstanceId -match "258A|3554" } |
-  Select-Object FriendlyName, InstanceId
+```bash
+npm test
 ```
 
-### 会不会把键盘刷坏？
+runs the protocol tests against the same simulated keyboard.
 
-不会。本软件**完全不碰固件**，只发标准 HID 读写命令，和不装任何软件相比风险没有增加。
-唯一会写设备的地方是改灯效/改键/写颜色，这些都能用「导出配置」先备份、再一键还原。
+## Put it on a website
 
-### 为什么 2.4G 下有些功能是灰的？
+The app is plain HTML, CSS and ES modules with relative paths, so it can live in any folder of a site.
 
-固件在无线通道上只开放了**读**命令。写改键、写逐键颜色、写宏在 2.4G 下发出去设备不响应
-（我们试了 24 + 18 组命令组合，全部无效）。插上数据线就全功能可用。
+```bash
+node tools/build.mjs
+```
 
-### 能刷固件吗？
+copies `index.html`, `css/`, `js/` and `assets/` into `dist/`. Upload that folder. Things to check on the host:
 
-不能。原厂的 V3 升级工具（`V3-F99Pro_20240508.exe`）只是一个**烧录器**，本身不含固件镜像
-——它启动后让你选一个 `.hex` 文件。没有那个文件，谁也没法刷。
+- The site is served over HTTPS.
+- `.js` files are served as `text/javascript`.
+- If the app is embedded in an `<iframe>`, the frame needs `allow="hid"` (and `allow="hid; display-capture; microphone"` for audio-reactive lighting).
+- The site does not send a `Permissions-Policy` header that disables `hid`.
 
-### 长按旋钮为什么会让键盘进一个奇怪的模式？
+## How it is organised
 
-那是**键盘固件自己的行为**，用户态关不掉。表现是旋钮开始直接调键盘背光、并且不再给电脑发按键。
-本软件有一个「固件模式守护」：检测到就会立刻把状态拉回来，所以你会看到指示灯闪一下然后恢复正常。
+```
+index.html            page shell
+css/app.css           all styling; themes are CSS variables
+js/main.js            connection, navigation, background checks
+js/prefs.js           preferences and restore points (localStorage)
+js/music.js           audio-reactive lighting
+js/hid/protocol.js    constants, record decoding, byte helpers
+js/hid/transport.js   WebHID links: wired (feature reports) and 2.4G
+js/hid/device.js      keyboard session: verified writes, snapshots
+js/hid/macro.js       macro memory encoding
+js/hid/demo.js        simulated keyboard used by the demo and tests
+js/data/              key geometry and the binding catalogue
+js/ui/                one file per page, plus shared components
+docs/PROTOCOL.md      the protocol, in English
+```
 
-## 致谢 / 参考过的项目
+Every write is read back and compared. If the keyboard did not take it, the previous value is restored and an error is shown.
 
-这个项目是站在别人肩膀上做的。下面这些是**实际参考过**的（不是客套）：
+## Differences from the desktop app
 
-| 项目 | 用到了什么 |
-|---|---|
-| [yhuikzdtguioaert/AulaSofwareLinux](https://github.com/yhuikzdtguioaert/AulaSofwareLinux) | Rust 写的 Linux 驱动。`proto.rs` 的帧格式（`PAGE=512` / `HEADER=8` / `REPORT_LEN=520` / 重试间隔）、`config_page.rs` 的配置页布局（`EFFECT_STRIDE=2`、`COLOR_RANDOM=7`、`slot_of(ui)=ui-1`）都是先在这里核对过才动手；`worker.rs` 那 8 种实测可用的旋钮动作，是我们旋钮功能列表的起点 |
-| [pradyumnac/aula-f99-controller](https://github.com/pradyumnac/aula-f99-controller) | 同款 F99 的协议文档，确认了厂商 HID 集合的选择方式 |
-| [cloudglides/aula-f75-linux-drivers](https://github.com/cloudglides/aula-f75-linux-drivers) | WebHID 实现，交叉验证了 2.4G 通道的包结构 |
-| [parsiya/f108-pro](https://github.com/parsiya/f108-pro) / [marcoslor/Aula-F87-Controller](https://github.com/marcoslor/Aula-F87-Controller) | 同系列型号的记录，用来判断哪些偏移是 F99 Pro 独有的、哪些是全系通用 |
-| [CalcProgrammer1/OpenRGB](https://github.com/CalcProgrammer1/OpenRGB) | 它的 `SinowealthController` 用的也是 `0x258A` 这个 VID。虽然协议和我们不同，但它证明了这批键盘的灯效数据结构（每键 RGB 平面）是同一套思路 |
+A web page cannot hook the system keyboard, change system volume or brightness, draw overlays or run in the background, so these parts of the desktop app are not here:
 
-另外，协议里的每一个字节都是**在自己的键盘上实测出来**的 —— 上面这些项目给的是方向和交叉验证，不是结论。凡是我们没验证过的，`docs/PROTOCOL.md` 里都标了 ⚠️ 或 ❓。
+- Knob actions carried out by the app (screen brightness, switching effects, custom knob slots) and its on-screen display. The knob bindings the keyboard performs itself still work.
+- Tray icon and start at login.
+- Background recovery from knob mode. Here it only runs while the page is open and in front (configurable).
+- System audio capture without a prompt. Here Chrome asks you to share a tab, screen or microphone.
 
-如果你发现有哪一条本该署名却没署，开 issue 告诉我，我立刻补。
+## Status
 
----
-## 许可
+The device layer follows the desktop app's tested protocol code and is covered by tests against a simulated keyboard. The web port has been confirmed working with a physical F99 Pro in Microsoft Edge. A restore point is saved automatically when you connect by cable, so changes can be undone. See [docs/PROTOCOL.md](docs/PROTOCOL.md) for which protocol facts are confirmed on hardware.
 
-MIT。字体与图标均为自制，无第三方素材。
+## Credits and licence
+
+MIT. Protocol research and the original application: [xx12ek/aula-f99-pro-hub](https://github.com/xx12ek/aula-f99-pro-hub) and the projects it credits ([AulaSofwareLinux](https://github.com/yhuikzdtguioaert/AulaSofwareLinux), [aula-f99-controller](https://github.com/pradyumnac/aula-f99-controller), [aula-f75-linux-drivers](https://github.com/cloudglides/aula-f75-linux-drivers), [OpenRGB](https://github.com/CalcProgrammer1/OpenRGB)).
+
+This is an unofficial project and is not affiliated with AULA. It never touches the keyboard's firmware.

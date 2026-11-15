@@ -1,40 +1,20 @@
-# 更新日志
+# Changelog
 
-## v0.3.0 — 2026-10-29
+## 1.0.0-web
 
-首个公开版本。功能全部在真机上验证过（`tools/selfcheck.py` 25/25 PASS）。
+Rewritten as a web application using WebHID. Runs in Chrome, Edge and Opera with nothing to install.
 
-### 灯光
-- 20 种灯效（含「关闭」，对齐原厂 `tc_kb_led20`）
-- 亮度 0–9 / 速度 0–4，无极拖动 + 松手缓动吸附
-- 逐键颜色：126 灯位、内置 HSV 色盘 + 明度条
-- 10 种音乐律动（WASAPI 环回 + FFT），灵敏度与刷新率可调
+- New JavaScript device layer (`js/hid/`) ported from the Python core: wired and 2.4G links, verified writes, snapshots.
+- New interface: Lighting, Colours, Keys, Macros, Device, Preferences.
+- User preferences: theme, accent colour, density, sidebar, keyboard size, start page, behaviour toggles.
+- Lighting presets, colour palette and colour profiles saved in the browser.
+- Press-to-assign for keys; macro recording in the browser.
+- Audio-reactive lighting through tab, system or microphone audio.
+- Restore points, backup files (also reads backups from the desktop app), factory reset.
+- Simulated keyboard for the demo and the tests.
 
-### 改键 / 宏
-- 4 层：默认 / FN1 / FN2 / Tap
-- 8 个功能分类：键盘、鼠标、多媒体、常用命令、组合键、修饰键、键盘内建、软件功能
-- 每颗键显示真实中文功能名
-- 宏录制进键盘本体 10 KB 宏库
-- 所有写操作读回校验
+Removed with the desktop app: app-driven knob actions and on-screen display, tray icon, start at login.
 
-### 旋钮
-- 15 种可绑定动作
-- 长按旋钮在**可增删改的自定义槽位**间轮回切换
-- 音量走系统原生通道（放行真键 → Windows 画原生条）
-- 其余动作自绘 OSD，尺寸/圆角/图标/强调色逐像素对齐 Win11 实测值
-- 固件模式守护：键盘被长按带进固件模式后自动拉回
+## 0.3.0
 
-### 2.4G 无线
-- 完整读取：身份、电量、配置页、矩阵、逐键颜色、旋钮记录
-- 可写：灯效、亮度、速度、休眠、配置页
-- 明确拦住并说明原因：写矩阵 / 写逐键颜色 / 写宏
-
-### 其它
-- 电量环形显示 + 充电状态
-- 备份 / 还原（整组快照，含配置页与逐键颜色）
-- 配置导入 / 导出（JSON）
-- 托盘常驻、关窗不退出、开机自启
-- 「杂项」页：灯效关闭、导入导出、去抖诊断、固件时间戳探测、原始配置页读写、恢复出厂
-
-### 已知限制
-见 [README 的「已知做不到的事」](../README.md#已知做不到的事)。
+Last release of the Windows desktop app by xx12ek. See the upstream repository for its history.
