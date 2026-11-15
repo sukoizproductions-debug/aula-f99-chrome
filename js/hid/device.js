@@ -7,7 +7,6 @@ import {
 } from './protocol.js';
 import { buildBank, parseBank } from './macro.js';
 
-const FAST_GAP = { pre: 2, post: 4 };
 
 export class Keyboard extends EventTarget {
   link = null;
@@ -272,10 +271,6 @@ export class Keyboard extends EventTarget {
         throw new AulaError('The keyboard did not accept the colours; the previous ones were restored');
       }
     });
-  }
-  // Unverified, short gaps: for the audio visualiser, which rewrites the table many times a second.
-  writeColorsFast(planes) {
-    return this.lock(() => this.needWired('Per-key colour').writeRgb(planes, FAST_GAP));
   }
 
   // ---- macros ----

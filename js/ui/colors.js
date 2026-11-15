@@ -113,7 +113,7 @@ export default {
   },
   paintAll() { this.board.each((k) => this.board.set(k.idx, { color: this.get(k.idx) })); },
 
-  editable() { return this.planes && this.app.kb.wired && !this.app.viz.running; },
+  editable() { return this.planes && this.app.kb.wired; },
 
   stroke(idx) {
     if (!this.editable()) return;
@@ -152,12 +152,11 @@ export default {
       this.planes = planes.slice();
       this.paintAll();
     }
-    app.viz.onFrame = (map) => { if (app.page === 'colors') for (const [idx, c] of map) this.board.set(idx, { color: c }); };
     this.sync();
   },
 
   sync() {
-    const { kb, prefs, viz } = this.app;
+    const { kb, prefs } = this.app;
     const dirty = this.planes && this.saved && !sameBytes(this.planes, this.saved);
     const auto = prefs.get('autoApplyColors');
     this.applyBtn.hidden = auto;
@@ -171,8 +170,6 @@ export default {
     this.banner.hidden = false;
     if (!kb.wired) {
       this.banner.append(h('span', { text: 'Connected over 2.4G: you can see the colours, but changing them needs the USB cable.' }));
-    } else if (viz.running) {
-      this.banner.append(h('span', { text: 'Audio-reactive lighting is running. Stop it on the Lighting page to edit colours.' }));
     } else if (!(kb.state.custom && kb.state.effect === EFFECT_CUSTOM)) {
       this.banner.append(
         h('span', { text: 'These colours only show while the effect is set to Custom.' }),

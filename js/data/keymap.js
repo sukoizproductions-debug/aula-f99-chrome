@@ -107,6 +107,3 @@ export const BOARD = { width: 653, height: 232 };
 
 export const KEYS = RAW.map(([idx, x, y, w, h, label, vk]) => ({ idx, x, y, w, h, label, vk }));
 export const KEY_BY_IDX = new Map(KEYS.map((k) => [k.idx, k]));
-
-// Physical order (top row first, left to right) - used by the audio visualiser.
-export const PHYSICAL_ORDER = [...KEYS].sort((a, b) => a.y - b.y || a.x - b.x).map((k) => k.idx);

@@ -3,7 +3,6 @@ import { DemoDevice } from './hid/demo.js';
 import { Keyboard } from './hid/device.js';
 import { OFF, WIRED_FILTER, WIRELESS_FILTER } from './hid/protocol.js';
 import { WiredLink, grantedLink, hidSupported, openLink } from './hid/transport.js';
-import { Visualizer } from './music.js';
 import { applyAppearance, prefs, restorePoints } from './prefs.js';
 import colors from './ui/colors.js';
 import devicePage from './ui/devicepage.js';
@@ -20,7 +19,6 @@ const app = {
   kb,
   prefs,
   pages,
-  viz: new Visualizer(kb),
   page: null,
   cache: { layers: null, macros: null, colors: null },
   lastGoodPage: null, // config page from before the keyboard entered firmware mode
@@ -97,13 +95,14 @@ function navigate(id, force = false) {
 function renderStatus() {
   const s = kb.state;
   clear(status);
+  status.classList.toggle('busy', kb.busy > 0);
   if (!s.connected) {
     status.append(h('span', { class: 'pill off' }, h('i', { class: 'dot' }), 'Not connected'));
     return;
   }
   const label = kb.demo ? 'Demo keyboard' : s.mode === 'wired' ? 'USB cable' : '2.4G wireless';
   add(status,
-    kb.busy > 0 && h('span', { class: 'spinner', title: 'Talking to the keyboard' }),
+    h('span', { class: 'spinner', title: 'Talking to the keyboard' }),
     s.firmwareMode && h('span', { class: 'pill warn', text: 'Knob mode' }),
     h('span', { class: 'pill' }, h('i', { class: 'dot' }), label),
     s.battery >= 0 && h('span', { class: 'battery', title: s.charging ? 'On USB power' : 'On battery' },
@@ -180,14 +179,12 @@ async function startDemo() {
 }
 
 async function disconnect() {
-  await app.viz.stop();
   await kb.detach();
   navigate(app.page, true);
 }
 
 function lost(message) {
   if (!kb.link) return;
-  app.viz.stop();
   kb.detach().then(() => navigate(app.page, true));
   toast(message, 'error');
 }
@@ -211,7 +208,7 @@ let checking = false;
 for (const type of ['keydown', 'pointerdown']) window.addEventListener(type, () => { lastInput = Date.now(); }, true);
 
 async function tick() {
-  if (checking || !kb.connected || kb.busy || app.viz.running) return;
+  if (checking || !kb.connected || kb.busy) return;
   const now = Date.now();
   const inFront = !document.hidden && document.hasFocus();
   checking = true;
@@ -244,7 +241,8 @@ kb.addEventListener('change', () => {
   renderStatus();
   if (kb.connected && mounted.has(app.page) && !mounted.get(app.page).hidden) pages.find((p) => p.id === app.page)?.update?.(app);
 });
-kb.addEventListener('busy', renderStatus);
+// Toggle a class instead of redrawing the status bar on every exchange.
+kb.addEventListener('busy', () => status.classList.toggle('busy', kb.busy > 0));
 
 prefs.on(() => {
   applyAppearance();
@@ -259,8 +257,10 @@ if (hidSupported()) {
 }
 window.addEventListener('hashchange', () => navigate(location.hash.slice(1)));
 window.addEventListener('beforeunload', (e) => {
-  if (app.viz.running || macros.dirty?.()) e.preventDefault();
+  if (macros.dirty?.()) e.preventDefault();
 });
+
+window.aulaHub = app; // handy in the DevTools console: aulaHub.kb.state
 
 applyAppearance();
 content.append(landing);

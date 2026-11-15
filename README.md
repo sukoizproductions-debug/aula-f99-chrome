@@ -15,7 +15,6 @@ This is a web port of [xx12ek/aula-f99-pro-hub](https://github.com/xx12ek/aula-f
 - **Keys**: remap any key on four layers (Base, Fn 1, Fn 2, Tap) to a key, shortcut, media key, mouse button, built-in keyboard function or macro. Press-to-assign is supported.
 - **Macros**: record or edit key sequences stored in the keyboard's own 10 KB macro memory.
 - **Knob**: change what the knob does, and recover from the keyboard's own "knob mode".
-- **Audio reactive**: lights follow tab, system or microphone audio while the page is open.
 - **Device**: battery level, sleep timer, backup to a file, restore points, factory reset.
 - **Preferences**: theme, accent colour, density, sidebar style, keyboard size, start page and behaviour toggles.
 
@@ -71,7 +70,7 @@ copies `index.html`, `css/`, `js/` and `assets/` into `dist/`. Upload that folde
 
 - The site is served over HTTPS.
 - `.js` files are served as `text/javascript`.
-- If the app is embedded in an `<iframe>`, the frame needs `allow="hid"` (and `allow="hid; display-capture; microphone"` for audio-reactive lighting).
+- If the app is embedded in an `<iframe>`, the frame needs `allow="hid"`.
 - The site does not send a `Permissions-Policy` header that disables `hid`.
 
 ## How it is organised
@@ -81,7 +80,6 @@ index.html            page shell
 css/app.css           all styling; themes are CSS variables
 js/main.js            connection, navigation, background checks
 js/prefs.js           preferences and restore points (localStorage)
-js/music.js           audio-reactive lighting
 js/hid/protocol.js    constants, record decoding, byte helpers
 js/hid/transport.js   WebHID links: wired (feature reports) and 2.4G
 js/hid/device.js      keyboard session: verified writes, snapshots
@@ -101,7 +99,7 @@ A web page cannot hook the system keyboard, change system volume or brightness, 
 - Knob actions carried out by the app (screen brightness, switching effects, custom knob slots) and its on-screen display. The knob bindings the keyboard performs itself still work.
 - Tray icon and start at login.
 - Background recovery from knob mode. Here it only runs while the page is open and in front (configurable).
-- System audio capture without a prompt. Here Chrome asks you to share a tab, screen or microphone.
+- Audio-reactive lighting. It was ported and then removed: on a real F99 Pro, rewriting the colour table many times a second froze typing and the lights did not update until the stream stopped.
 
 ## Status
 

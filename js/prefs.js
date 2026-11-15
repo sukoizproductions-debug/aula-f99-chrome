@@ -25,8 +25,6 @@ export const DEFAULTS = {
   presets: [], // [{ name, effect, brightness, speed, color }]
   palette: ['#ff3b30', '#ff9500', '#ffd60a', '#34c759', '#32d5f5', '#0a84ff', '#7c4dff', '#ff2d92', '#ffffff'],
   profiles: [], // [{ name, rgb: hex planes }]
-  audioStyle: 'balanced',
-  audioGain: 1,
 };
 
 const listeners = new Set();

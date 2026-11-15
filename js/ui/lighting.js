@@ -1,6 +1,5 @@
-// Lighting page: effect, brightness, speed, colour, saved presets, audio-reactive mode.
+// Lighting page: effect, brightness, speed, colour, saved presets.
 import { BRIGHT_MAX, COLORS, EFFECTS, SPEED_MAX, effectName } from '../hid/protocol.js';
-import { STYLES } from '../music.js';
 import { card, clear, h, icon, promptDialog } from './dom.js';
 
 // Send only the newest value while a previous one is still on the wire.
@@ -46,7 +45,7 @@ export default {
   icon: 'light',
 
   mount(root, app) {
-    const { kb, prefs, viz } = app;
+    const { kb, prefs } = app;
 
     // ---- effects ----
     this.effects = h('div', { class: 'effect-grid' }, EFFECTS.map((e) => h('button', {
@@ -78,29 +77,6 @@ export default {
       this.renderPresets(app);
     };
 
-    // ---- audio reactive ----
-    const style = h('select', { class: 'input', onchange: () => { prefs.set('audioStyle', style.value); viz.setStyle(style.value); } },
-      STYLES.map((s) => h('option', { value: s.id, text: s.name, selected: s.id === prefs.get('audioStyle') })));
-    const gain = h('input', {
-      type: 'range', min: 0.3, max: 3, step: 0.1, value: prefs.get('audioGain'),
-      oninput: () => { viz.gain = Number(gain.value); prefs.set('audioGain', viz.gain); },
-    });
-    viz.setStyle(prefs.get('audioStyle'));
-    viz.gain = Number(prefs.get('audioGain'));
-    this.meter = h('div', { class: 'meter' }, h('div', { class: 'meter-fill' }));
-    const start = (source) => app.run(async () => { await viz.start(source); this.update(app); });
-    this.audioStart = h('div', { class: 'row' },
-      h('button', { class: 'btn primary', text: 'Use tab or system audio', onclick: () => start('share') }),
-      h('button', { class: 'btn', text: 'Use microphone', onclick: () => start('mic') }));
-    this.audioStop = h('button', { class: 'btn', text: 'Stop', onclick: () => viz.stop() });
-    this.audioNote = h('p', { class: 'muted small' });
-    viz.onStop = (err) => { if (err) app.toast(`Audio lighting stopped: ${err.message}`, 'error'); this.update(app); };
-    const tick = () => {
-      this.meter.firstChild.style.width = `${Math.round(viz.level * 100)}%`;
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-
     root.append(
       card('Effect', 'Applies straight away and is stored on the keyboard.', this.effects),
       h('div', { class: 'grid-2' },
@@ -109,11 +85,6 @@ export default {
         card('Presets', 'Your own one-click combinations, saved in this browser.',
           this.presets,
           h('button', { class: 'btn', onclick: savePreset }, icon('plus', 16), 'Save current as preset'))),
-      card('Audio reactive', 'Lights follow whatever is playing. Runs only while this page is open.',
-        h('div', { class: 'grid-2 tight' },
-          h('label', { class: 'field' }, h('span', { text: 'Style' }), style),
-          h('label', { class: 'field' }, h('span', { text: 'Sensitivity' }), gain)),
-        this.meter, this.audioStart, this.audioStop, this.audioNote),
     );
     this.renderPresets(app);
   },
@@ -136,8 +107,7 @@ export default {
   },
 
   update(app) {
-    const { kb, viz } = app;
-    const s = kb.state;
+    const s = app.kb.state;
     const off = s.effect === 0;
     for (const b of this.effects.children) b.classList.toggle('on', Number(b.dataset.id) === s.effect);
     this.bright.sync(s.brightness, off);
@@ -150,16 +120,5 @@ export default {
     this.colorNote.textContent = s.custom
       ? 'Custom uses the per-key colours from the Colours page.'
       : off ? 'Lighting is off.' : 'Some effects ignore the colour and always cycle.';
-
-    const wired = kb.wired;
-    this.audioStart.hidden = viz.running || !wired;
-    this.audioStop.hidden = !viz.running;
-    this.meter.hidden = !viz.running;
-    this.audioNote.textContent = !wired
-      ? 'Needs the USB cable: per-key colours cannot be written over 2.4G.'
-      : viz.running
-        ? 'Running. Your previous colours and effect come back when you stop.'
-        : 'Chrome will ask what to share. Choose a tab or your screen and tick “Also share audio”.';
-    this.effects.classList.toggle('locked', viz.running);
   },
 };

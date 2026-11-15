@@ -181,6 +181,8 @@ data[2 * 126 + slot] = B
 
 ✅ The colours only show when **both** `0x09 = 1` and `0x0A = 19` are set in the config page.
 
+🌐 Do not stream this table. Tested on hardware with this port: writing it about 20 times a second stopped the keyboard sending key presses, and the LEDs did not change until the writes stopped. The keyboard cannot scan keys while it is taking a 520-byte feature report.
+
 ## 7. Macro memory
 
 - 10240 bytes (`0x2800`), wired only (`0x85` / `0x05`). ✅

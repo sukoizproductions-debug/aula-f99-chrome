@@ -164,7 +164,9 @@ textarea.input { height: auto; padding: 10px; width: 100%; resize: vertical; fon
 .battery-shell::after { content: ""; position: absolute; right: -4.5px; top: 3px; width: 2px; height: 4px; border-radius: 0 2px 2px 0; background: var(--muted); }
 .battery-fill { display: block; height: 100%; border-radius: 1.5px; background: var(--ok); }
 .battery-fill.low { background: var(--danger); }
-.spinner { width: 15px; height: 15px; border: 2px solid var(--border-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+/* Always in the layout so nothing shifts; fades in only if the keyboard is busy for a moment. */
+.spinner { width: 15px; height: 15px; border: 2px solid var(--border-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; opacity: 0; transition: opacity 0.2s; }
+.status.busy .spinner { opacity: 1; transition: opacity 0.15s 0.25s; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .banner {
@@ -265,7 +267,6 @@ textarea.input { height: auto; padding: 10px; width: 100%; resize: vertical; fon
 .effect.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); }
 .effect-no { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
 .effect.on .effect-no { color: inherit; opacity: 0.7; }
-.effect-grid.locked { opacity: 0.5; pointer-events: none; }
 .slider { display: grid; gap: 6px; }
 .slider-head { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 550; color: var(--muted); }
 .slider-value { font-variant-numeric: tabular-nums; color: var(--text); }

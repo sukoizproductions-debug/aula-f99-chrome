@@ -9,11 +9,12 @@ Rewritten as a web application using WebHID. Runs in Chrome, Edge and Opera with
 - User preferences: theme, accent colour, density, sidebar, keyboard size, start page, behaviour toggles.
 - Lighting presets, colour palette and colour profiles saved in the browser.
 - Press-to-assign for keys; macro recording in the browser.
-- Audio-reactive lighting through tab, system or microphone audio.
 - Restore points, backup files (also reads backups from the desktop app), factory reset.
 - Simulated keyboard for the demo and the tests.
 
 Removed with the desktop app: app-driven knob actions and on-screen display, tray icon, start at login.
+
+Audio-reactive lighting was ported and then removed. On a real F99 Pro, streaming the per-key colour table many times a second froze key input and the lights only changed once the stream stopped.
 
 ## 0.3.0
 

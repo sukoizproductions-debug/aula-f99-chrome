@@ -27,7 +27,7 @@ export class WiredLink {
   constructor(device) {
     this.device = device;
     this.payloadLen = featureBytes(device, WIRED_ID); // bytes after the report id
-    // Timing the firmware needs; the audio visualiser shortens the write gaps.
+    // Pauses the firmware needs around each report.
     this.gap = { pre: 15, readWait: 30, post: 50 };
   }
 
@@ -121,7 +121,7 @@ export class WiredLink {
     return this.write(CMD.SET_MATRIX, layer & 3, data);
   }
   readRgb() { return this.read(CMD.GET_RGB, 0, RGB_LEN); }
-  writeRgb(planes, gap) { return this.write(CMD.SET_RGB, 0, planes, gap); }
+  writeRgb(planes) { return this.write(CMD.SET_RGB, 0, planes); }
   readMacros(length = MACRO_MAX) { return this.read(CMD.GET_MACRO, 0, length); }
   writeMacros(blob) {
     if (blob.length > MACRO_MAX) throw new AulaError('Macro bank is too large');
