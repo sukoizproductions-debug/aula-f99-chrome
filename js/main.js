@@ -55,7 +55,7 @@ const mounted = new Map();
 
 document.getElementById('app').append(
   h('aside', { class: 'sidebar' },
-    h('div', { class: 'brand' }, h('img', { src: 'assets/duck.svg', alt: '', width: 28, height: 28 }), h('span', { text: 'Aula in Chrome' })),
+    h('div', { class: 'brand' }, h('i', { class: 'duck', style: { width: '28px', height: '28px' } }), h('span', { text: 'Aula in Chrome' })),
     nav,
     h('div', { class: 'sidebar-foot' },
       h('a', { href: 'https://github.com/sukoizproductions-debug/aula-f99-chrome', target: '_blank', rel: 'noopener', text: 'Source' }),
@@ -116,7 +116,7 @@ function renderLanding() {
   const supported = hidSupported();
   add(clear(landing),
     h('div', { class: 'hero' },
-      h('img', { src: 'assets/duck.svg', alt: '', width: 72, height: 72 }),
+      h('i', { class: 'duck', style: { width: '72px', height: '72px' } }),
       h('h2', { text: 'Your AULA F99 Pro, from the browser' }),
       h('p', { class: 'lead', text: 'Lighting, per-key colours, remapping, macros and battery level. No driver to install: this page talks straight to the keyboard over WebHID, and nothing leaves your computer.' }),
       h('div', { class: 'row center' },
@@ -235,6 +235,21 @@ async function tick() {
 }
 setInterval(tick, 1000);
 
+// The tab icon is the duck in the accent colour, redrawn whenever the accent changes.
+let duckSvg = null;
+let faviconColor = null;
+async function updateFavicon() {
+  const color = prefs.get('accent');
+  if (color === faviconColor) return;
+  faviconColor = color;
+  try {
+    duckSvg ??= await (await fetch('assets/duck.svg')).text();
+    if (prefs.get('accent') !== color) return; // changed again while loading
+    const svg = duckSvg.replace(/fill="#[0-9a-f]{3,8}"/i, `fill="${color}"`);
+    document.querySelector('link[rel="icon"]').href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  } catch { /* keep the static icon */ }
+}
+
 // ---------- wiring ----------
 kb.addEventListener('change', () => {
   if (kb.page && kb.page[OFF.MODE] === 0) app.lastGoodPage = kb.page.slice();
@@ -246,6 +261,7 @@ kb.addEventListener('busy', () => status.classList.toggle('busy', kb.busy > 0));
 
 prefs.on(() => {
   applyAppearance();
+  updateFavicon();
   if (kb.connected || app.page === 'prefs') pages.find((p) => p.id === app.page && mounted.has(p.id))?.update?.(app);
   if (app.page === 'keys' && kb.connected) keys.render();
 });
@@ -263,6 +279,7 @@ window.addEventListener('beforeunload', (e) => {
 window.aulaHub = app; // handy in the DevTools console: aulaHub.kb.state
 
 applyAppearance();
+updateFavicon();
 content.append(landing);
 renderLanding();
 renderStatus();

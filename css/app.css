@@ -73,6 +73,8 @@ a { color: var(--accent-text); }
   position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 6px;
   padding: 16px 10px; background: var(--surface); border-right: 1px solid var(--border);
 }
+/* The logo is a mask, so it takes the accent colour. */
+.duck { display: inline-block; flex: none; background: var(--accent); -webkit-mask: url("../assets/duck.svg") center / contain no-repeat; mask: url("../assets/duck.svg") center / contain no-repeat; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; font-weight: 700; letter-spacing: -0.01em; }
 .nav { display: flex; flex-direction: column; gap: 2px; }
 .nav-item {
