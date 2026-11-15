@@ -55,7 +55,7 @@ const mounted = new Map();
 
 document.getElementById('app').append(
   h('aside', { class: 'sidebar' },
-    h('div', { class: 'brand' }, h('img', { src: 'assets/icon.png', alt: '', width: 28, height: 28 }), h('span', { text: 'AULA Hub' })),
+    h('div', { class: 'brand' }, h('img', { src: 'assets/duck.svg', alt: '', width: 28, height: 28 }), h('span', { text: 'Aula in Chrome' })),
     nav,
     h('div', { class: 'sidebar-foot' },
       h('a', { href: 'https://github.com/sukoizproductions-debug/aula-f99-chrome', target: '_blank', rel: 'noopener', text: 'Source' }),
@@ -116,7 +116,7 @@ function renderLanding() {
   const supported = hidSupported();
   add(clear(landing),
     h('div', { class: 'hero' },
-      h('img', { src: 'assets/icon.png', alt: '', width: 64, height: 64 }),
+      h('img', { src: 'assets/duck.svg', alt: '', width: 72, height: 72 }),
       h('h2', { text: 'Your AULA F99 Pro, from the browser' }),
       h('p', { class: 'lead', text: 'Lighting, per-key colours, remapping, macros and battery level. No driver to install: this page talks straight to the keyboard over WebHID, and nothing leaves your computer.' }),
       h('div', { class: 'row center' },

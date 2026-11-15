@@ -31,4 +31,4 @@ createServer(async (req, res) => {
     });
     res.end(body);
   } catch { res.writeHead(404).end('Not found'); }
-}).listen(port, () => console.log(`AULA Hub listening on port ${port}`));
+}).listen(port, () => console.log(`Aula in Chrome listening on port ${port}`));

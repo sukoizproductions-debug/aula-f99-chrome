@@ -1,4 +1,4 @@
-# AULA Hub (web)
+# Aula in Chrome
 
 Control an **AULA F99 Pro** keyboard from the browser. Lighting, per-key colours, key remapping, macros and battery level, with no driver or app to install. The page talks to the keyboard directly over [WebHID](https://developer.mozilla.org/docs/Web/API/WebHID_API); nothing is sent to a server.
 

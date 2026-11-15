@@ -1,4 +1,4 @@
-/* AULA Hub. Tokens first, then layout, components, pages. */
+/* Aula in Chrome. Tokens first, then layout, components, pages. */
 :root {
   --accent: #4f6ef7;
   --bg: #f6f7f9;
@@ -74,7 +74,6 @@ a { color: var(--accent-text); }
   padding: 16px 10px; background: var(--surface); border-right: 1px solid var(--border);
 }
 .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; font-weight: 700; letter-spacing: -0.01em; }
-.brand img { border-radius: 7px; }
 .nav { display: flex; flex-direction: column; gap: 2px; }
 .nav-item {
   display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 10px; border: 0; border-radius: 8px;
@@ -221,7 +220,6 @@ textarea.input { height: auto; padding: 10px; width: 100%; resize: vertical; fon
 /* ---------- landing ---------- */
 .landing { display: grid; gap: 28px; padding: 6vh 0 0; }
 .hero { display: grid; gap: 16px; justify-items: center; text-align: center; max-width: 620px; margin: 0 auto; }
-.hero img { border-radius: 14px; }
 .hero h2 { font-size: 1.9rem; letter-spacing: -0.02em; line-height: 1.15; }
 .lead { font-size: 1.05rem; color: var(--muted); }
 .facts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--gap); max-width: 880px; margin: 0 auto; width: 100%; }
